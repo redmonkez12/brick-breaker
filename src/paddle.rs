@@ -1,11 +1,11 @@
 use macroquad::color::Color;
-use macroquad::math::Vec2;
+use macroquad::math::{clamp, Vec2};
 use macroquad::prelude::Rect;
 use macroquad::shapes::draw_rectangle;
 use crate::constants::{PADDLE_HEIGHT, PADDLE_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH};
 
 pub struct Paddle {
-    rect: Rect,
+    pub rect: Rect,
     color: Color,
 }
 
@@ -26,11 +26,9 @@ impl Paddle {
         let rect = self.rect;
         draw_rectangle(rect.x, rect.y, rect.w, rect.h, self.color);
     }
-    
-    pub fn update(&mut self, dx: f32, dy: f32) {
-        self.rect.move_to(Vec2 {
-            x: self.rect.x + dx,
-            y: self.rect.y + dy,
-        })
+
+    pub fn update(&mut self, dx: f32) {
+        let clamped_x = clamp(self.rect.x + dx, 0.0, SCREEN_WIDTH - PADDLE_WIDTH);
+        self.rect.move_to(Vec2::new(clamped_x, self.rect.y));
     }
 }
