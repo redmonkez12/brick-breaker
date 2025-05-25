@@ -1,0 +1,32 @@
+use macroquad::color::{Color, LIME, ORANGE, RED};
+use macroquad::math::Rect;
+use macroquad::prelude::draw_rectangle;
+
+enum Lives {
+    One = 1,
+    Two = 2,
+    Three = 3,
+}
+
+pub struct Brick {
+    pub lives: u8,
+    pub rect: Rect,
+    colors: Vec<Color>,
+}
+
+impl Brick {
+    pub fn new() -> Self {
+        Self {
+            lives: Lives::Three as u8,
+            rect: Rect::default(),
+            colors: vec![RED, ORANGE, LIME],
+        }
+    }
+
+    pub fn draw(&self) {
+        let rect = &self.rect;
+        let color = self.colors[self.lives as usize - 1];
+
+        draw_rectangle(rect.x, rect.y, rect.w, rect.h, color);
+    }
+}

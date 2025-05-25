@@ -7,3 +7,7 @@ pub const PADDLE_SPEED: f32 = 300.0;
 pub const DEFAULT_BALL_SPEED_Y: f32 = -300.0;
 pub const DEFAULT_BALL_SPEED_X: f32 = 0.0;
 pub const BALL_RADIUS: f32 = 10.0;
+pub const BRICK_WIDTH: f32 = 40.0;
+pub const BRICK_HEIGHT: f32 = 15.0;
+pub const SPACING_WIDTH: f32 = 3.0;
+pub const SPACING_HEIGHT: f32 = 3.0;
