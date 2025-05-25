@@ -2,7 +2,7 @@ use macroquad::color::{Color, LIME, ORANGE, RED};
 use macroquad::math::Rect;
 use macroquad::prelude::draw_rectangle;
 
-enum Lives {
+pub enum Lives {
     One = 1,
     Two = 2,
     Three = 3,
@@ -11,15 +11,17 @@ enum Lives {
 pub struct Brick {
     pub lives: u8,
     pub rect: Rect,
+    pub score: u32,
     colors: Vec<Color>,
 }
 
 impl Brick {
-    pub fn new() -> Self {
+    pub fn new(lives: Lives) -> Self {
         Self {
-            lives: Lives::Three as u8,
+            lives: lives as u8,
             rect: Rect::default(),
             colors: vec![RED, ORANGE, LIME],
+            score: 100,
         }
     }
 

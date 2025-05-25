@@ -1,7 +1,5 @@
-use crate::constants::{
-    BALL_RADIUS, DEFAULT_BALL_SPEED_X, DEFAULT_BALL_SPEED_Y, PADDLE_HEIGHT, SCREEN_HEIGHT,
-    SCREEN_WIDTH,
-};
+use macroquad::audio::{PlaySoundParams, Sound};
+use crate::constants::{BALL_RADIUS, DEFAULT_BALL_SPEED_X, DEFAULT_BALL_SPEED_Y, PADDLE_HEIGHT, PLAYGROUND_HEIGHT, SCREEN_HEIGHT, SCREEN_WIDTH, UI_HEIGHT};
 use macroquad::color::Color;
 use macroquad::math::{clamp, Rect};
 use macroquad::shapes::draw_circle;
@@ -27,18 +25,21 @@ impl Ball {
         }
     }
 
-    pub fn update(&mut self, delta: f32, paddle_rect: &Rect) {
+    pub fn update(&mut self, delta: f32, paddle_rect: &Rect, ball_sound: &Sound) -> bool {
         let new_x = self.x + self.vel_x * delta;
         let new_y = self.y + self.vel_y * delta;
+        let mut play_sound = false;
 
         if new_x < BALL_RADIUS || new_x > SCREEN_WIDTH - BALL_RADIUS {
             self.vel_x = -self.vel_x;
+            play_sound = true;
         }
 
-        if new_y < BALL_RADIUS {
+        if new_y < BALL_RADIUS + UI_HEIGHT {
             self.vel_y = -self.vel_y;
+            play_sound = true;
         }
-
+        
         if self.overlaps(paddle_rect) && self.vel_y > 0.0 {
             let paddle_center = paddle_rect.center();
             let hit_position = (new_x - paddle_center.x) / (paddle_rect.w / 2.0);
@@ -52,11 +53,21 @@ impl Ball {
 
             self.vel_x = bounce_angle.cos() * current_speed;
             self.vel_y = bounce_angle.sin() * current_speed;
+            play_sound = true;
         }
 
-        if new_y > SCREEN_HEIGHT - BALL_RADIUS {
-            println!("Game over");
-            return;
+        if play_sound {
+            macroquad::audio::play_sound(
+                ball_sound,
+                PlaySoundParams {
+                    looped: false,
+                    volume: 1.0,
+                },
+            );
+        }
+
+        if new_y > PLAYGROUND_HEIGHT - BALL_RADIUS {
+            return false;
         }
 
         self.x = clamp(
@@ -67,8 +78,10 @@ impl Ball {
         self.y = clamp(
             self.y + self.vel_y * delta,
             BALL_RADIUS,
-            SCREEN_HEIGHT - BALL_RADIUS,
+            PLAYGROUND_HEIGHT - BALL_RADIUS,
         );
+        
+        true
     }
 
     pub fn draw(&self) {
@@ -84,5 +97,12 @@ impl Ball {
         let distance_squared = distance_x * distance_x + distance_y * distance_y;
 
         distance_squared <= (self.radius * self.radius)
+    }
+    
+    pub fn reset(&mut self) {
+        self.x = SCREEN_WIDTH / 2.0;
+        self.y = SCREEN_HEIGHT - PADDLE_HEIGHT - BALL_RADIUS * 2.0;
+        self.vel_x = DEFAULT_BALL_SPEED_X;
+        self.vel_y = -DEFAULT_BALL_SPEED_Y;
     }
 }

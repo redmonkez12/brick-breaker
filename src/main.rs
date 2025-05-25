@@ -1,13 +1,15 @@
+use crate::constants::{SCREEN_HEIGHT, SCREEN_WIDTH, UI_HEIGHT};
+use crate::game_state::{GameMode, GameState};
+use macroquad::audio;
+use macroquad::audio::{play_sound, PlaySoundParams};
 use macroquad::prelude::*;
-use crate::ball::Ball;
-use crate::brick::Brick;
-use crate::constants::{BRICK_WIDTH, BRICK_HEIGHT, PADDLE_SPEED, SCREEN_HEIGHT, SCREEN_WIDTH, SPACING_WIDTH, SPACING_HEIGHT, BALL_RADIUS};
-use crate::paddle::Paddle;
 
-mod constants;
-mod paddle;
 mod ball;
 mod brick;
+mod constants;
+mod game_state;
+mod level;
+mod paddle;
 
 fn window_conf() -> Conf {
     Conf {
@@ -20,61 +22,70 @@ fn window_conf() -> Conf {
 
 #[macroquad::main(window_conf)]
 async fn main() {
-    let mut paddle = Paddle::new(GOLD);
-    let mut ball = Ball::new(MAROON);
+    set_pc_assets_folder("src/assets");
+    let bg_music = audio::load_sound("sounds/game_music.wav").await.unwrap();
+    let ball_sound = audio::load_sound("sounds/ball_sound.wav").await.unwrap();
+    let brick_sound = audio::load_sound("sounds/brick_sound.wav").await.unwrap();
 
-    let mut bricks = Vec::new();
-    let brick_total_width = BRICK_WIDTH + SPACING_WIDTH;
-    let brick_total_height = BRICK_WIDTH + SPACING_HEIGHT;
-
-    let num_bricks_x = ((SCREEN_WIDTH - SPACING_WIDTH) / brick_total_width) as usize;
-    let num_bricks_y = 3;
-
-    let start_y = 30.0;
-    let start_x = (SCREEN_WIDTH - (num_bricks_x as f32) * brick_total_width) / 2.0;
-
-    for i in 0..num_bricks_y {
-        for j in 0..num_bricks_x {
-            let x = start_x + (j as f32) * brick_total_width;
-            let y = start_y + (i as f32) * brick_total_height;
-
-            let mut brick = Brick::new();
-            brick.rect = Rect::new(x, y, BRICK_WIDTH, BRICK_HEIGHT);
-            bricks.push(brick);
-        }
-    }
+    play_sound(
+        &bg_music,
+        PlaySoundParams {
+            looped: true,
+            volume: 1.0,
+        },
+    );
+    
+    let mut game_state = GameState::new(bg_music, ball_sound, brick_sound);
 
     loop {
         clear_background(BLACK);
 
+        let lives_text = format!("Lives: {}", game_state.lives);
+        let level_text = format!("Level: {}", game_state.level);
+        let level_size = measure_text(&level_text, None, 20, 1.0);
+        let lives_size = measure_text(&lives_text, None, 20, 1.0);
+
+        draw_line(0.0, UI_HEIGHT, SCREEN_WIDTH, UI_HEIGHT, 1.0, WHITE);
+        draw_text(&lives_text, 20.0, UI_HEIGHT - 15.0, 20.0, WHITE);
+        draw_text(&level_text, 20.0 + lives_size.width + 10.0, UI_HEIGHT - 15.0, 20.0, WHITE);
+
+        draw_text(
+            &format!("Score: {}", game_state.total_score),
+            20.0 + level_size.width + lives_size.width + 20.0,
+            UI_HEIGHT - 15.0,
+            20.0,
+            WHITE,
+        );
+
         let delta = get_frame_time();
 
-        if is_key_down(KeyCode::Left) {
-            paddle.update(-PADDLE_SPEED * delta);
+        if game_state.mode == GameMode::Paused {
+            let text = "Press Space to start";
+            let text_size = measure_text(text, None, 20, 1.0);
+
+            draw_text(
+                text,
+                SCREEN_WIDTH / 2.0 - text_size.width / 2.0,
+                SCREEN_HEIGHT / 2.0 - text_size.height / 2.0,
+                20.0,
+                WHITE,
+            );
         }
-        if is_key_down(KeyCode::Right) {
-            paddle.update(PADDLE_SPEED * delta);
+        
+        if game_state.mode == GameMode::GameOver {
+            let text = "Game Over press Space to restart";
+            let text_size = measure_text(text, None, 20, 1.0);
+            
+            draw_text(
+                text,
+                SCREEN_WIDTH / 2.0 - text_size.width / 2.0,
+                SCREEN_HEIGHT / 2.0 - text_size.height / 2.0,
+                20.0,
+                WHITE,
+            );
         }
 
-        paddle.draw();
-        ball.update(delta, &paddle.rect);
-        ball.draw();
-
-        let mut hit_brick = false;
-
-        for brick in bricks.iter_mut() {
-            brick.draw();
-
-            if !hit_brick && ball.overlaps(&brick.rect) {
-                brick.lives = brick.lives.saturating_sub(1);
-                hit_brick = true;
-            }
-        }
-
-        if hit_brick {
-            ball.vel_y = -ball.vel_y;
-            bricks.retain(|brick| brick.lives > 0);
-        }
+        game_state.update(delta);
 
         next_frame().await;
     }
