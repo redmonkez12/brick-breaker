@@ -52,9 +52,9 @@ impl GameState {
             levels,
             mode: GameMode::Paused,
         };
-        
+
         game_state.bricks = game_state.get_level_bricks();
-        
+
         game_state
     }
 
@@ -68,7 +68,7 @@ impl GameState {
         for brick in self.bricks.iter_mut() {
             brick.draw();
 
-            if !hit_brick && self.ball.overlaps(&brick.rect) {
+            if self.ball.overlaps(&brick.rect) {
                 brick.lives = brick.lives.saturating_sub(1);
                 hit_brick = true;
                 play_sound(
@@ -78,6 +78,7 @@ impl GameState {
                         volume: 1.0,
                     },
                 );
+                break;
             }
         }
 
@@ -91,7 +92,7 @@ impl GameState {
                 is_alive
             });
         }
-        
+
         if self.bricks.is_empty() {
             self.level += 1;
             if self.level > self.max_level {
@@ -149,7 +150,7 @@ impl GameState {
     fn get_level_bricks(&self) -> Vec<Brick> {
         self.levels[self.level as usize - 1]()
     }
-    
+
     fn reset_game(&mut self) {
         self.ball.reset();
         self.paddle.reset_position();
