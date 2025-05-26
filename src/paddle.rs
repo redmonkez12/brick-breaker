@@ -25,7 +25,7 @@ impl Paddle {
     }
 
     pub fn update(&mut self, dx: f32) {
-        let clamped_x = clamp(self.rect.x + dx, UI_HEIGHT, SCREEN_WIDTH - PADDLE_WIDTH);
+        let clamped_x = clamp(self.rect.x + dx, 0.0, SCREEN_WIDTH - PADDLE_WIDTH);
         self.rect.move_to(Vec2::new(clamped_x, self.rect.y));
     }
     

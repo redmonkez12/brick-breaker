@@ -1,8 +1,9 @@
-use crate::constants::{SCREEN_HEIGHT, SCREEN_WIDTH, UI_HEIGHT};
+use crate::constants::{SCREEN_HEIGHT, SCREEN_WIDTH};
 use crate::game_state::{GameMode, GameState};
 use macroquad::audio;
 use macroquad::audio::{play_sound, PlaySoundParams};
 use macroquad::prelude::*;
+use crate::ui::{draw_game_over, draw_game_paused, draw_top_bar, draw_win_state};
 
 mod ball;
 mod brick;
@@ -10,6 +11,7 @@ mod constants;
 mod game_state;
 mod level;
 mod paddle;
+mod ui;
 
 fn window_conf() -> Conf {
     Conf {
@@ -40,51 +42,14 @@ async fn main() {
     loop {
         clear_background(BLACK);
 
-        let lives_text = format!("Lives: {}", game_state.lives);
-        let level_text = format!("Level: {}", game_state.level);
-        let level_size = measure_text(&level_text, None, 20, 1.0);
-        let lives_size = measure_text(&lives_text, None, 20, 1.0);
-
-        draw_line(0.0, UI_HEIGHT, SCREEN_WIDTH, UI_HEIGHT, 1.0, WHITE);
-        draw_text(&lives_text, 20.0, UI_HEIGHT - 15.0, 20.0, WHITE);
-        draw_text(&level_text, 20.0 + lives_size.width + 10.0, UI_HEIGHT - 15.0, 20.0, WHITE);
-
-        draw_text(
-            &format!("Score: {}", game_state.total_score),
-            20.0 + level_size.width + lives_size.width + 20.0,
-            UI_HEIGHT - 15.0,
-            20.0,
-            WHITE,
-        );
+        draw_top_bar(game_state.lives, game_state.level, game_state.total_score);
 
         let delta = get_frame_time();
 
-        if game_state.mode == GameMode::Paused {
-            let text = "Press Space to start";
-            let text_size = measure_text(text, None, 20, 1.0);
-
-            draw_text(
-                text,
-                SCREEN_WIDTH / 2.0 - text_size.width / 2.0,
-                SCREEN_HEIGHT / 2.0 - text_size.height / 2.0,
-                20.0,
-                WHITE,
-            );
-        }
+        draw_game_paused(&game_state.mode);
+        draw_game_over(&game_state.mode);
+        draw_win_state(&game_state.mode);
         
-        if game_state.mode == GameMode::GameOver {
-            let text = "Game Over press Space to restart";
-            let text_size = measure_text(text, None, 20, 1.0);
-            
-            draw_text(
-                text,
-                SCREEN_WIDTH / 2.0 - text_size.width / 2.0,
-                SCREEN_HEIGHT / 2.0 - text_size.height / 2.0,
-                20.0,
-                WHITE,
-            );
-        }
-
         game_state.update(delta);
 
         next_frame().await;
